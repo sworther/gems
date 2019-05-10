@@ -12,39 +12,7 @@
 ;; don't use Chez)
 (print-gensym #f)
 (optimize-level 3)
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; utilities ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; pmatch, a pattern match macro taken from Dan Friedman's course C311 (B521)
-;; derived with small chnages to Oleg Kiselyov's pattern matcher.
-(define-syntax pmatch
-  (syntax-rules (else guard)
-    [(_ (rator rand ...) cs ...)
-     (let ((v (rator rand ...)))
-       (pmatch v cs ...))]
-    [(_ v) (error 'pmatch "failed: ~s" v)]
-    [(_ v (else e0 e ...)) (begin e0 e ...)]
-    [(_ v (pat (guard g ...) e0 e ...) cs ...)
-     (let ((fk (lambda () (pmatch v cs ...))))
-       (ppat v pat (if (and g ...) (begin e0 e ...) (fk)) (fk)))]
-    [(_ v (pat e0 e ...) cs ...)
-     (let ((fk (lambda () (pmatch v cs ...))))
-       (ppat v pat (begin e0 e ...) (fk)))]))
-
-(define-syntax ppat
-  (syntax-rules (_ quote unquote)
-    [(_ v _ kt kf) kt]
-    [(_ v () kt kf) (if (null? v) kt kf)]
-    [(_ v (quote lit) kt kf) (if (equal? v (quote lit)) kt kf)]
-    [(_ v (unquote var) kt kf) (let ((var v)) kt)]
-    [ (_ v (x . y) kt kf)
-      (if (pair? v)
-          (let ((vx (car v)) (vy (cdr v)))
-            (ppat vx x (ppat vy y kt kf) kf))
-          kf)]
-    [(_ v lit kt kf) (if (equal? v (quote lit)) kt kf)]))
-
-
+(load "pmatch.ss")
 
 ;; utility for binding multiple values
 (define-syntax letv*

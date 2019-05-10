@@ -8,20 +8,20 @@
 ;; automatic test utility. Run transformation forwards then backwards,
 ;; and compare with the input term.
 (define-syntax test-equals
-  (syntax-rules () 
+  (syntax-rules ()
     [(_ name exp expected)
      (begin
        (printf "testing ~s ...~n" name)
        (let ([result exp])
-         (cond 
-          [(equal? expected exp) 
+         (cond
+          [(equal? expected exp)
            (printf " succeeded\n")]
-          [else 
+          [else
            (error 'test "test ~a failed~nexpected: ~a~nbut got: ~a~nexpression: ~a~n"
                   name expected result 'exp)])))]))
 
 (define-syntax test-infer-type
-  (syntax-rules () 
+  (syntax-rules ()
     [(_ name exp expected)
      (begin
        (printf "testing ~s ...~n" name)
@@ -30,13 +30,13 @@
               [s^ (unify (parse-type 'expected) result s0)])
          (cond
           [s^ (printf " succeeded\n")]
-          [else 
+          [else
            (error 'test "test ~a failed~nexpected type: ~a~nactual type: ~a~nexpression: ~a~n"
                   name 'expected t1 'exp)])))]))
 
 
 (define-syntax test-isomorphism
-  (syntax-rules () 
+  (syntax-rules ()
     [(_ name e1 e2)
      (begin
        (printf "testing ~s ...~n" name)
@@ -67,8 +67,8 @@
 
 (test-equals "unify-1" (unify (make-arr 'int t1 #f) (make-arr 'int t1 #f) s0) '())
 
-(test-equals "unify-2" 
-             (unify (make-arr 'int t1 #f) 
+(test-equals "unify-2"
+             (unify (make-arr 'int t1 #f)
                     (make-arr 'int (make-arr 'int t1 #f) #f)
                     s1)
              s1)
@@ -97,10 +97,10 @@
 ;;; Test3: degenerated structure test (self-arrow)
 ;;     t1 = (t1 -> t1) = (t1 -> (t1 -> t1)) = ((t1 -> t1) -> (t1 -> t1))
 ;;
-;;       -> 
-;;     /     \         
+;;       ->
+;;     /     \
 ;;     \     |
-;;      \   v 
+;;      \   v
 ;;        t1
 
 (define s3 `((,t1 . ,(make-arrow t1 t1))))
@@ -137,13 +137,13 @@
 (define tb (make-tvar 'b))
 
 (test-equals "reify-1"
- (unparse (reify ta `((,ta . ,(make-arrow tb 'int)) (,tb . ,(make-arrow 'bool tb)))))
- '((%0 bool -> !0) -> int))
+             (unparse (reify ta `((,ta . ,(make-arrow tb 'int)) (,tb . ,(make-arrow 'bool tb)))))
+             '((%0 bool -> !0) -> int))
 
 
 (test-equals "reify-2"
- (unparse (reify ta `((,ta . ,(make-arrow tb ta)) (,tb . ,(make-arrow 'bool tb)))))
- '(%1 (%0 bool -> !0) -> !1))
+             (unparse (reify ta `((,ta . ,(make-arrow tb ta)) (,tb . ,(make-arrow 'bool tb)))))
+             '(%1 (%0 bool -> !0) -> !1))
 
 
 
@@ -155,11 +155,11 @@
 (test-equals "infer-string" (infer "hi") 'string)
 (test-equals "infer-boolean" (infer #t) 'bool)
 
-(test-equals "infer-function-1" (infer '(lambda (f) ((f 1) "hi"))) 
-    '((int -> (string -> t0)) -> t0))
+(test-equals "infer-function-1" (infer '(lambda (f) ((f 1) "hi")))
+             '((int -> (string -> t0)) -> t0))
 
 (test-equals "infer-function-2" (infer '(lambda (f) (lambda (g) (f (g 1)))))
-    '((t0 -> t1) -> ((int -> t0) -> t1)))
+             '((t0 -> t1) -> ((int -> t0) -> t1)))
 
 
 (define id '(lambda (x) x))
@@ -202,13 +202,13 @@
 (test-equals "infer-14" (infer L7) '((t0 -> t0) -> (t0 -> t0)))
 
 
-; Stephen Kleene's pred
+                                        ; Stephen Kleene's pred
 (define Lpred-K `(lambda (n)
-                 (,Lcar ((n (lambda (p)
-                              ((,Lpair (,Lcdr p)) (,Lsucc (,Lcdr p)))))
-                         ((,Lpair ,L0) ,L0)))))
+                   (,Lcar ((n (lambda (p)
+                                ((,Lpair (,Lcdr p)) (,Lsucc (,Lcdr p)))))
+                           ((,Lpair ,L0) ,L0)))))
 
-; Daniel Smith (my classmate in B621)'s pred
+                                        ; Daniel Smith (my classmate in B621)'s pred
 (define Lpred-D
   '(lambda (n)
      (lambda (w)
@@ -222,34 +222,34 @@
 (define Lpow `(lambda (m) (lambda (n) (lambda (f) (lambda (x) (((m n) f) x))))))
 
 (test-equals "infer-15" (infer Lpred-K)
-     '(((((t0 -> (t1 -> t1)) -> ((t2 -> t3) -> (t4 -> t2)))
-         ->
-         ((((t2 -> t3) -> (t4 -> t2))
-            ->
-            (((t2 -> t3) -> (t4 -> t3)) -> t5))
-           ->
-           t5))
-        ->
-        ((((t6 -> (t7 -> t7)) -> ((t8 -> (t9 -> t9)) -> t10))
-           ->
-           t10)
-          ->
-          ((t11 -> (t12 -> t11)) -> t13)))
-       ->
-       t13))
+             '(((((t0 -> (t1 -> t1)) -> ((t2 -> t3) -> (t4 -> t2)))
+                 ->
+                 ((((t2 -> t3) -> (t4 -> t2))
+                   ->
+                   (((t2 -> t3) -> (t4 -> t3)) -> t5))
+                  ->
+                  t5))
+                ->
+                ((((t6 -> (t7 -> t7)) -> ((t8 -> (t9 -> t9)) -> t10))
+                  ->
+                  t10)
+                 ->
+                 ((t11 -> (t12 -> t11)) -> t13)))
+               ->
+               t13))
 
 (test-equals "infer-16" (infer Lpred-D)
-     '((((t0 -> t1) -> ((t1 -> t2) -> t2))
-        ->
-        ((t3 -> t4) -> ((t5 -> t5) -> t6)))
-       ->
-       (t0 -> (t4 -> t6))))
+             '((((t0 -> t1) -> ((t1 -> t2) -> t2))
+                ->
+                ((t3 -> t4) -> ((t5 -> t5) -> t6)))
+               ->
+               (t0 -> (t4 -> t6))))
 
 (test-isomorphism "isomorphism-pred" Lpred-K Lpred-D)
 
 
 
-; SKI combinators
+                                        ; SKI combinators
 (define S '(lambda (f) (lambda (g) (lambda (x) ((f x) (g x))))))
 (define K '(lambda (x) (lambda (y) x)))
 (define I '(lambda (x) x))
@@ -257,29 +257,29 @@
 (define C '(lambda (a) (lambda (b) (lambda (c) ((a c) b)))))
 
 (test-equals "infer-S" (infer S)
-  '((t0 -> (t1 -> t2)) -> ((t0 -> t1) -> (t0 -> t2))))
+             '((t0 -> (t1 -> t2)) -> ((t0 -> t1) -> (t0 -> t2))))
 
 (test-equals "infer-K" (infer K)
-  '(t0 -> (t1 -> t0)))
+             '(t0 -> (t1 -> t0)))
 
 (test-equals "infer-I" (infer I)
-  '(t0 -> t0))
+             '(t0 -> t0))
 
 (test-equals "infer-B" (infer B)
-  '((t0 -> t1) -> ((t2 -> t0) -> (t2 -> t1))))
+             '((t0 -> t1) -> ((t2 -> t0) -> (t2 -> t1))))
 
 (test-equals "infer-C" (infer C)
-  '((t0 -> (t1 -> t2)) -> (t1 -> (t0 -> t2))))
+             '((t0 -> (t1 -> t2)) -> (t1 -> (t0 -> t2))))
 
 (test-equals "infer-SKK" (infer `((,S ,K) ,K))
-  '(t0 -> t0))
+             '(t0 -> t0))
 
 ;; ((S I) I) = (lambda (x) (x x)
 (test-equals "infer-SII" (infer `((,S ,I) ,I))
-  '((%0 !0 -> t0) -> t0))
+             '((%0 !0 -> t0) -> t0))
 
 (test-equals "infer-S(SKK)(SKK)" (infer `((,S ((,S ,K) ,K)) ((,S ,K) ,K)))
-  '((%0 !0 -> t0) -> t0))
+             '((%0 !0 -> t0) -> t0))
 
 (test-isomorphism "isomorphism-SKK-I" `((,S ,K) ,K) I)
 
@@ -291,13 +291,13 @@
 (define selfapp '(lambda (x) (x x)))
 
 (test-equals "selfapp" (infer selfapp)
-  '((%0 !0 -> t0) -> t0))
+             '((%0 !0 -> t0) -> t0))
 
 
 (define Omega '((lambda (x) (x x)) (lambda (x) (x x))))
 
 (test-equals "infer-Omega" (infer Omega)
-  't0)
+             't0)
 
 
 
@@ -308,7 +308,7 @@
       (lambda (x) (f (lambda (t) ((x x) t)))))))
 
 (test-equals "infer-Yv" (infer Yv)
-  '(((t0 -> t1) -> (t0 -> t1)) -> (t0 -> t1)))
+             '(((t0 -> t1) -> (t0 -> t1)) -> (t0 -> t1)))
 
 
 ;; call-by-name Y combinator
@@ -318,7 +318,7 @@
       (lambda (x) (f (x x))))))
 
 (test-equals "infer-Yn" (infer Yn)
-  '((t0 -> t0) -> t0))
+             '((t0 -> t0) -> t0))
 
 (test-isomorphism "isomorphism-Yv-Yn" Yv Yn)
 
@@ -335,45 +335,45 @@
 (define !v `(,Yv ,!v-gen))
 
 (test-equals "infer-!v" (infer !v)
-  '((%1 ((((%0 !0 -> ((%1 !0 -> (!1 -> !1)) -> !1))
-         ->
-         (!1 -> !1))
-        ->
-        ((!0 -> (!1 -> !1)) -> (!0 -> !0)))
-       ->
-       ((((!0 -> (!1 -> !1)) -> (!0 -> !0))
-          ->
-          (((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))
-            ->
-            (((%1 !1 -> (!0 -> (!0 -> !2))) -> (!0 -> !1))
-              ->
-              (!1 -> (!0 -> !1)))))
-         ->
-         ((!1 -> (!0 -> !1))
-           ->
-           (((!0 -> (!2 -> !2))
-              ->
-              ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2))))
-             ->
-             !3))))
-     ->
-     ((!0 -> !0) -> !2))
-  ->
-  ((((!0 -> (!2 -> !2)) -> (!0 -> !0))
-     ->
-     (((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))
-       ->
-       ((!3 -> (!0 -> !3)) -> (!3 -> (!0 -> !3)))))
-    ->
-    (((!0 -> (!2 -> !2)) -> ((!0 -> (!2 -> !2)) -> (!0 -> !0)))
-      ->
-      ((((!0 -> (!2 -> !2)) -> (!0 -> !0))
-         ->
-         (((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))
-           ->
-           ((!3 -> (!0 -> !3)) -> (!3 -> (!0 -> !3)))))
-        ->
-        ((!3 -> (!0 -> !3)) -> (!3 -> (!0 -> !3))))))))
+             '((%1 ((((%0 !0 -> ((%1 !0 -> (!1 -> !1)) -> !1))
+                      ->
+                      (!1 -> !1))
+                     ->
+                     ((!0 -> (!1 -> !1)) -> (!0 -> !0)))
+                    ->
+                    ((((!0 -> (!1 -> !1)) -> (!0 -> !0))
+                      ->
+                      (((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))
+                       ->
+                       (((%1 !1 -> (!0 -> (!0 -> !2))) -> (!0 -> !1))
+                        ->
+                        (!1 -> (!0 -> !1)))))
+                     ->
+                     ((!1 -> (!0 -> !1))
+                      ->
+                      (((!0 -> (!2 -> !2))
+                        ->
+                        ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2))))
+                       ->
+                       !3))))
+                   ->
+                   ((!0 -> !0) -> !2))
+               ->
+               ((((!0 -> (!2 -> !2)) -> (!0 -> !0))
+                 ->
+                 (((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))
+                  ->
+                  ((!3 -> (!0 -> !3)) -> (!3 -> (!0 -> !3)))))
+                ->
+                (((!0 -> (!2 -> !2)) -> ((!0 -> (!2 -> !2)) -> (!0 -> !0)))
+                 ->
+                 ((((!0 -> (!2 -> !2)) -> (!0 -> !0))
+                   ->
+                   (((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))
+                    ->
+                    ((!3 -> (!0 -> !3)) -> (!3 -> (!0 -> !3)))))
+                  ->
+                  ((!3 -> (!0 -> !3)) -> (!3 -> (!0 -> !3))))))))
 
 
 
@@ -386,51 +386,51 @@
 (define !n `(,Yn ,!n-gen))
 
 (test-equals "infer-!n" (infer !n)
-  '((%1 ((((%0 (%1 (!0 -> (!1 -> !1))
-                ->
-                ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1))))
+             '((%1 ((((%0 (%1 (!0 -> (!1 -> !1))
+                              ->
+                              ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1))))
+                               ->
+                               (!1 -> !1)))
+                          ->
+                          ((!0 -> (!1 -> !1))
+                           ->
+                           ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))) -> !0)))
+                      ->
+                      (!1 -> !1))
+                     ->
+                     ((!0 -> (!1 -> !1))
+                      ->
+                      ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))) -> !0)))
+                    ->
+                    ((((!0 -> (!1 -> !1))
+                       ->
+                       ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))) -> !0))
+                      ->
+                      !0)
+                     ->
+                     (((%1 !1 -> !2) -> (!2 -> !1)) -> !3)))
+                   ->
+                   !2)
+               ->
+               (((!0 -> (!2 -> !2))
+                 ->
+                 ((!0 -> (!2 -> !2))
                   ->
-                  (!1 -> !1)))
-            ->
-            ((!0 -> (!1 -> !1))
-              ->
-              ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))) -> !0)))
-         ->
-         (!1 -> !1))
-        ->
-        ((!0 -> (!1 -> !1))
-          ->
-          ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))) -> !0)))
-       ->
-       ((((!0 -> (!1 -> !1))
-           ->
-           ((!1 -> ((!0 -> (!1 -> !1)) -> (!0 -> (!1 -> !1)))) -> !0))
-          ->
-          !0)
-         ->
-         (((%1 !1 -> !2) -> (!2 -> !1)) -> !3)))
-     ->
-     !2)
-  ->
-  (((!0 -> (!2 -> !2))
-     ->
-     ((!0 -> (!2 -> !2))
-       ->
-       ((!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))) -> !0)))
-    ->
-    (((!0 -> (!2 -> !2))
-       ->
-       ((!0 -> (!2 -> !2))
-         ->
-         ((!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))) -> !0)))
-      ->
-      ((((!0 -> (!2 -> !2))
-          ->
-          ((!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))) -> !0))
-         ->
-         (!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))))
-        ->
-        ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2))))))))
+                  ((!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))) -> !0)))
+                ->
+                (((!0 -> (!2 -> !2))
+                  ->
+                  ((!0 -> (!2 -> !2))
+                   ->
+                   ((!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))) -> !0)))
+                 ->
+                 ((((!0 -> (!2 -> !2))
+                    ->
+                    ((!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))) -> !0))
+                   ->
+                   (!2 -> ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2)))))
+                  ->
+                  ((!0 -> (!2 -> !2)) -> (!0 -> (!2 -> !2))))))))
 
 
 (test-isomorphism "isomorphism-!v-!n ... may take longer ..." !v !n)
@@ -443,11 +443,11 @@
 ;; http://muaddibspace.blogspot.com/2008/01/type-inference-for-simply-typed-lambda.html
 
 (test-equals "infer-oleg-1"
-   (infer '(lambda (f) (lambda (x) (f (x 1)))))
-   '((t0 -> t1) -> ((int -> t0) -> t1)))
+             (infer '(lambda (f) (lambda (x) (f (x 1)))))
+             '((t0 -> t1) -> ((int -> t0) -> t1)))
 
-;; 
-;; => 
+;;
+;; =>
 
 ;; (infer '(lambda (f) (lambda (x) ((f (x 1)) (x #t)))))
 ;; => infer: incompatible argument type:
@@ -468,8 +468,8 @@
 ;; The inferencer can type the following term which wasn't supposed to be typable in HM system:
 
 (test-equals "infer-oleg-2"
-   (infer '(lambda (f) (lambda (x) ((f (x (lambda (z) z))) (x (lambda (u) (lambda (v) u)))))))
-   '((t0 -> (t0 -> t1))
-     ->
-     ((((%0 t2 -> !0) -> !0) -> t0) -> t1)))
+             (infer '(lambda (f) (lambda (x) ((f (x (lambda (z) z))) (x (lambda (u) (lambda (v) u)))))))
+             '((t0 -> (t0 -> t1))
+               ->
+               ((((%0 t2 -> !0) -> !0) -> t0) -> t1)))
 

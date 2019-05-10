@@ -1,8 +1,8 @@
 ;; call-by-name interpreter (reducer)
 
 
-(load "pmatch.scm")
-(load "encoding.scm")
+(load "pmatch.ss")
+(load "encoding.ss")
 
 
 (define occur-free?

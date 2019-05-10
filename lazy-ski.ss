@@ -1,4 +1,4 @@
-(load "pmatch.scm")
+(load "pmatch.ss")
 
 (define occur-free?
   (lambda (y exp)

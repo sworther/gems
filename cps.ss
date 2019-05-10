@@ -4,100 +4,127 @@
 ;; author: Yin Wang (yw21@cs.indiana.edu)
 
 
-(load "pmatch.scm")
+(load "pmatch.ss")
 
 
 (define cps
   (lambda (exp)
     (letrec
-        ([trivs '(zero? sub1)]
+        ([trivial?  (lambda (x) (memq x '(zero? add1 sub1)))]
          [id (lambda (v) v)]
-         [C~ (lambda (v) `(k ,v))]      ; tail context
+         [ctx0 (lambda (v) `(k ,v))]      ; tail context
          [fv (let ((n -1))
                (lambda ()
                  (set! n (+ 1 n))
                  (string->symbol (string-append "v" (number->string n)))))]
          [cps1
-          (lambda (exp C)
+          (lambda (exp ctx)
             (pmatch exp
-              [,x (guard (not (pair? x))) (C x)]
+              [,x (guard (not (pair? x))) (ctx x)]
               [(if ,test ,conseq ,alt)
                (cps1 test
                      (lambda (t)
-                       (if (memq C (list C~ id))
-                           `(if ,t ,(cps1 conseq C) ,(cps1 alt C))
+                       (if (memq ctx (list ctx0 id))
+                           `(if ,t ,(cps1 conseq ctx) ,(cps1 alt ctx))
                            (let ((v* (fv)))
-                             `(let ((k (lambda (,v*) ,(C v*))))
-                                (if ,t ,(cps1 conseq C~) ,(cps1 alt C~)))))))]
+                             `(let ((k (lambda (,v*) ,(ctx v*))))
+                                (if ,t ,(cps1 conseq ctx0) ,(cps1 alt ctx0)))))))]
               [(lambda (,x) ,body)
-               (C `(lambda (,x k) ,(cps1 body C~)))]
+               (ctx `(lambda (,x k) ,(cps1 body ctx0)))]
               [(,op ,a ,b)
                (cps1 a (lambda (v1)
                          (cps1 b (lambda (v2)
-                                   (C `(,op ,v1 ,v2))))))]
+                                   (ctx `(,op ,v1 ,v2))))))]
               [(,rator ,rand)
                (cps1 rator
                      (lambda (r)
                        (cps1 rand
                              (lambda (d)
                                (cond
-                                [(memq r trivs) (C `(,r ,d))]
-                                [(eq? C C~) `(,r ,d k)] ; tail call
+                                [(trivial? r) (ctx `(,r ,d))]
+                                [(eq? ctx ctx0) `(,r ,d k)] ; tail call
                                 [else
                                  (let ((v* (fv)))
-                                   `(,r ,d (lambda (,v*) ,(C v*))))])))))]))])
+                                   `(,r ,d (lambda (,v*) ,(ctx v*))))])))))]))])
       (cps1 exp id))))
 
 
 
 
-;;; tests
+;; tests
 
 ;; var
-(cps 'x)
-(cps '(lambda (x) x))
-(cps '(lambda (x) (x 1)))
+(cps 'x)                                ;x
+
+(cps '(lambda (x) x))                   ;; (lambda (x k) (k x))
+
+(cps '(lambda (x) (x 1)))               ;; (lambda (x k) (x 1 k))
 
 
-; no lambda (will generate identity functions to return to the toplevel)
-(cps '(if (f x) a b))
-(cps '(if x (f a) b))
+
+;; no lambda (will generate identity functions to return to the toplevel)
+(cps '(if (f x) a b))                   ;; (f x (lambda (v0) (if v0 a b)))
+
+(cps '(if x (f a) b))                   ;; (if x (f a (lambda (v0) v0)) b)
 
 
-; if stand-alone (tail)
+
+;; if stand-alone (tail)
 (cps '(lambda (x) (if (f x) a b)))
+;; (lambda (x k) (f x (lambda (v0) (if v0 (k a) (k b)))))
 
 
-; if inside if-test (non-tail)
+
+;; if inside if-test (non-tail)
 (cps '(lambda (x) (if (if x (f a) b) c d)))
+;; (lambda (x k)
+;;   (let ([k (lambda (v0) (if v0 (k c) (k d)))])
+;;     (if x (f a k) (k b))))
 
 
-; both branches are trivial, should do some more optimizations
+
+;; both branches are trivial, should do some more optimizations
 (cps '(lambda (x) (if (if x (zero? a) b) c d)))
+;; (lambda (x k)
+;;   (let ([k (lambda (v0) (if v0 (k c) (k d)))])
+;;     (if x (k (zero? a)) (k b))))
 
 
-; if inside if-branch (tail)
+
+;; if inside if-branch (tail)
 (cps '(lambda (x) (if t (if x (f a) b) c)))
 
 
-; if inside if-branch, but again inside another if-test (non-tail)
+;; if inside if-branch, but again inside another if-test (non-tail)
 (cps '(lambda (x) (if (if t (if x (f a) b) c) e w)))
 
 
-; if as operand (non-tail)
+;; if as operand (non-tail)
 (cps '(lambda (x) (h (if x (f a) b))))
 
 
-; if as operator (non-tail)
+;; if as operator (non-tail)
 (cps '(lambda (x) ((if x (f g) h) c)))
 
 
-; why we need more than two names
+;; why we need more than two names
 (cps '(((f a) (g b)) ((f c) (g d))))
 
 
+;;; factorial
+(cps
+ '(lambda (n)
+    ((lambda (fact)
+       ((fact fact) n))
+     (lambda (fact)
+       (lambda (n)
+         (if (zero? n)
+             1
+             (* n ((fact fact) (sub1 n)))))))))
 
-; factorial
+
+
+;; factorial
 ((eval
   (cps
    '(lambda (n)
@@ -109,5 +136,4 @@
                1
                (* n ((fact fact) (sub1 n))))))))))
  5
- (lambda (v) v))
-
+ (lambda (v) v))                        ;;; 120

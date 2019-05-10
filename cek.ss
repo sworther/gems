@@ -1,5 +1,5 @@
 (case-sensitive #t)
-(load "pmatch.scm")
+(load "pmatch.ss")
 
 (define value?
   (lambda (exp)
@@ -129,7 +129,7 @@
 
 
 ;;; Example 2: factorial
-(load "encoding.scm")
+(load "encoding.ss")
 
 (define s `(((,! ,lfive) ,mt-env) ,mt-k ,mt-h))
 
