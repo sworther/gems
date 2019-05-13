@@ -4,7 +4,8 @@
 ;; author: Yin Wang (yw21@cs.indiana.edu)
 
 
-(load "pmatch.ss")
+;; (load "pmatch.ss")     ;; substitute match to match
+(import (tspl match))
 
 
 (define cps
@@ -19,7 +20,7 @@
                  (string->symbol (string-append "v" (number->string n)))))]
          [cps1
           (lambda (exp ctx)
-            (pmatch exp
+            (match exp
               [,x (guard (not (pair? x))) (ctx x)]
               [(if ,test ,conseq ,alt)
                (cps1 test
@@ -137,3 +138,84 @@
                (* n ((fact fact) (sub1 n))))))))))
  5
  (lambda (v) v))                        ;;; 120
+
+(cps
+ '(lambda (n)
+    ((lambda (fib)
+       ((fib fib) n))
+     (lambda (fib)
+       (lambda (n)
+         (cond [(zero? n) 0]
+               [(zero? (- n 1)) 1]
+               [else
+                (+  ((fib fib) (- n 1))
+                    ((fib fib) (- n 2)))]))))))
+
+
+(cps
+ '(lambda (n)
+    ((lambda (fib)
+       ((fib fib) n))
+     (lambda (fib)
+       (lambda (n)
+         (if (zero? n)
+             0
+             (if (zero? (- n 1))
+                 1
+                 (+  ((fib fib) (- n 1))
+                     ((fib fib) (- n 2))))))))))
+
+;; (lambda (n k)
+;;   ((lambda (fib k) (fib fib (lambda (v0) (v0 n k))))
+;;     (lambda (fib k)
+;;       (k (lambda (n k)
+;;            (if (zero? n)
+;;                (k 0)
+;;                (if (zero? (- n 1))
+;;                    (k 1)
+;;                    (fib fib
+;;                         (lambda (v1)
+;;                           (v1 (- n 1)
+;;                               (lambda (v2)
+;;                                 (fib fib
+;;                                      (lambda (v3)
+;;                                        (v3 (- n 2)
+;;                                            (lambda (v4)
+;;                                              (k (+ v2 v4)))))))))))))))
+;;     k))
+
+
+
+((eval
+  (cps
+   '(lambda (n)
+      ((lambda (fib)
+         ((fib fib) n))
+       (lambda (fib)
+         (lambda (n)
+           (if (zero? n)
+               0
+               (if (zero? (- n 1))
+                   1
+                   (+  ((fib fib) (- n 1))
+                       ((fib fib) (- n 2)))))))))))
+ 10
+ (lambda (v) v))
+
+
+
+;; cond not implemented yet
+((eval
+  (cps
+   '(lambda (n)
+      ((lambda (fib)
+         ((fib fib) n))
+       (lambda (fib)
+         (lambda (n)
+           (cond [(zero? n) 0]
+                 [(zero? (- n 1)) 1]
+                 [else
+                  (+  ((fib fib) (- n 1))
+                      ((fib fib) (- n 2)))])))))))
+ 5
+ (lambda (v) v))
